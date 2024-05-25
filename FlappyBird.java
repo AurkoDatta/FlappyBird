@@ -1,9 +1,12 @@
 import java.awt.*;
 import java.awt.event.*;
-import java.security.KeyStore;
+import java.awt.image.BufferedImage;
+import java.awt.geom.AffineTransform;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Random;
-import javax.swing.*;
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 
 public class FlappyBird extends JPanel implements ActionListener, KeyListener {
     int boardWidth = 360;
@@ -130,7 +133,21 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
         g.drawImage(backgroundImg, 0, 0, boardWidth, boardheight, null);
 
         //bird
-        g.drawImage(bird.img, bird.x, bird.y, bird.width, bird.height, null);
+        if (gravity < velocityY) {
+            BufferedImage rotatedBirdImg = rotateImage(bird.img, 45);
+            g.drawImage(rotatedBirdImg, bird.x, bird.y, bird.width, bird.height, null);
+        } else if (gravity > velocityY) {
+            BufferedImage rotatedBirdImg = rotateImage(bird.img, -45);
+            g.drawImage(rotatedBirdImg, bird.x, bird.y, bird.width, bird.height, null);
+
+
+        } else {
+            g.drawImage(bird.img, bird.x, bird.y, bird.width, bird.height, null );
+        }
+
+
+
+
 
         //pipes
         for (int i = 0; i < pipes.size(); i++){
@@ -181,6 +198,43 @@ public class FlappyBird extends JPanel implements ActionListener, KeyListener {
                 a.y < b.y + b.height &&
                 a.y + a.height > b.y;
     }
+
+    public BufferedImage rotateImage(Image img, double angle) {
+        BufferedImage bufferedImage = toBufferedImage(img);
+        double rads = Math.toRadians(angle);
+        double sin = Math.abs(Math.sin(rads)), cos = Math.abs(Math.cos(rads));
+        int w = bufferedImage.getWidth();
+        int h = bufferedImage.getHeight();
+        int newWidth = (int) Math.floor(w * cos + h * sin) + 3;
+        int newHeight = (int) Math.floor(h * cos + w * sin) + 3;
+        BufferedImage rotated = new BufferedImage(newWidth, newHeight, bufferedImage.getType());
+        Graphics2D g2d = rotated.createGraphics();
+        AffineTransform at = new AffineTransform();
+        at.translate((newWidth - w) / 2, (newHeight - h) / 2);
+        at.rotate(rads, w / 2, h / 2);
+        g2d.setTransform(at);
+        g2d.drawImage(bufferedImage, 0, 0, null);
+        g2d.dispose();
+        return rotated;
+    }
+
+    private BufferedImage toBufferedImage(Image img) {
+        if (img instanceof BufferedImage) {
+            return (BufferedImage) img;
+        }
+
+        BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D bGr = bimage.createGraphics();
+        bGr.drawImage(img, 0, 0, null);
+        bGr.dispose();
+
+        return bimage;
+    }
+
+    public Image getScaledImage(Image srcImg, int w, int h) {
+        return srcImg.getScaledInstance(w, h, Image.SCALE_SMOOTH);
+    }
+
 
     @Override
     public void actionPerformed(ActionEvent e){
